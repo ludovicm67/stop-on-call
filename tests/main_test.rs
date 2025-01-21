@@ -1,21 +1,26 @@
 #[cfg(test)]
 mod tests {
     use reqwest::Client;
+    use serial_test::serial;
     use std::env;
     use stop_on_call::start_server;
     use tokio::task;
-    use tokio::time::{Duration, sleep};
+    use tokio::time::{sleep, Duration};
     use tokio_util::sync::CancellationToken;
 
     async fn start_test_server(token: CancellationToken) {
         task::spawn(async move {
             start_server(token).await;
         });
-        sleep(Duration::from_secs(1)).await; // Give the server a moment to start
+        sleep(Duration::from_millis(200)).await; // Give the server a moment to start
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_healthz_endpoint() {
+        unsafe {
+            env::set_var("STOP_ON_CALL_PORT", "");
+        }
         let token = CancellationToken::new();
         start_test_server(token.clone()).await;
         let client = Client::new();
@@ -31,6 +36,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_healthz_endpoint_other_port() {
         unsafe {
             env::set_var("STOP_ON_CALL_PORT", "8081");
@@ -50,6 +56,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_stop_endpoint_without_secret() {
         unsafe {
             env::set_var("STOP_ON_CALL_PORT", "8082");
@@ -66,6 +73,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_stop_endpoint_with_secret() {
         unsafe {
             env::set_var("STOP_ON_CALL_PORT", "8083");
@@ -86,6 +94,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_stop_endpoint_with_invalid_secret() {
         unsafe {
             env::set_var("STOP_ON_CALL_PORT", "8084");
