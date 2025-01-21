@@ -16,6 +16,9 @@ jobs:
       packages: write
       id-token: write
 
+    env:
+      IMAGE_NAME: ${{ github.repository }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +43,7 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v5
         with:
-          images: "ghcr.io/${GITHUB_REPOSITORY}"
+          images: "ghcr.io/${IMAGE_NAME}"
           tags: |
             type=ref,event=branch
             type=semver,prefix=v,pattern={{version}}
