@@ -15,6 +15,24 @@ mod tests {
         sleep(Duration::from_millis(200)).await; // Give the server a moment to start
     }
 
+    async fn check_server_stopped(port: u16) -> bool {
+        let client = Client::new();
+        let resp = client
+            .get(format!("http://localhost:{}/healthz", port))
+            .send()
+            .await;
+        resp.is_err()
+    }
+
+    async fn check_server_alive(port: u16) -> bool {
+        let client = Client::new();
+        let resp = client
+            .get(format!("http://localhost:{}/healthz", port))
+            .send()
+            .await;
+        resp.is_ok()
+    }
+
     #[tokio::test]
     #[serial]
     async fn test_healthz_endpoint() {
@@ -32,7 +50,9 @@ mod tests {
         assert_eq!(resp.status(), 200);
         let body = resp.text().await.unwrap();
         assert_eq!(body, "ok");
+        assert!(check_server_alive(8080).await);
         token.cancel(); // Stop the server after the test
+        assert!(check_server_stopped(8080).await);
     }
 
     #[tokio::test]
@@ -52,7 +72,9 @@ mod tests {
         assert_eq!(resp.status(), 200);
         let body = resp.text().await.unwrap();
         assert_eq!(body, "ok");
+        assert!(check_server_alive(8081).await);
         token.cancel(); // Stop the server after the test
+        assert!(check_server_stopped(8081).await);
     }
 
     #[tokio::test]
@@ -69,6 +91,7 @@ mod tests {
         assert_eq!(resp.status(), 200);
         let body = resp.text().await.unwrap();
         assert_eq!(body, "Server stopping...");
+        assert!(check_server_stopped(8082).await);
         token.cancel(); // Stop the server after the test
     }
 
@@ -90,6 +113,7 @@ mod tests {
         assert_eq!(resp.status(), 200);
         let body = resp.text().await.unwrap();
         assert_eq!(body, "Server stopping...");
+        assert!(check_server_stopped(8083).await);
         token.cancel(); // Stop the server after the test
     }
 
@@ -111,6 +135,8 @@ mod tests {
         assert_eq!(resp.status(), 403);
         let body = resp.text().await.unwrap();
         assert_eq!(body, "Invalid or missing secret");
+        assert!(check_server_alive(8084).await);
         token.cancel(); // Stop the server after the test
+        assert!(check_server_stopped(8084).await);
     }
 }
