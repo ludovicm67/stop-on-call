@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::env;
 use std::net::{IpAddr, SocketAddr};
 use tokio::signal;
+use tokio_util::sync::CancellationToken;
 
 /// Stop-on-Call: A lightweight HTTP server that stops on a specific trigger.
 #[tokio::main]
@@ -25,10 +26,13 @@ async fn main() {
         .to_uppercase();
     let secret = env::var("STOP_ON_CALL_SECRET").ok();
 
-    let (tx, mut rx) = tokio::sync::oneshot::channel::<()>();
+    let token = CancellationToken::new();
+    let cloned_token = token.clone();
 
     let stop_handler = move |Query(params): Query<HashMap<String, String>>, headers: HeaderMap| {
+        let cloned_token = token.clone();
         let secret_clone = secret.clone();
+
         async move {
             if let Some(expected_secret) = &secret_clone {
                 let user_secret = params
@@ -36,13 +40,13 @@ async fn main() {
                     .map(String::as_str)
                     .or_else(|| headers.get("X-Secret").and_then(|v| v.to_str().ok()));
                 if user_secret == Some(expected_secret.as_str()) {
-                    tx.send(()).unwrap();
+                    cloned_token.cancel();
                     (StatusCode::OK, "Server stopping...")
                 } else {
                     (StatusCode::FORBIDDEN, "Invalid or missing secret")
                 }
             } else {
-                tx.send(()).unwrap();
+                cloned_token.cancel();
                 (StatusCode::OK, "Server stopping...")
             }
         }
@@ -72,7 +76,7 @@ async fn main() {
                 _ = signal::ctrl_c() => {
                     println!("received ctrl-c, shutting down");
                 }
-                _ = &mut rx => {
+                _ = cloned_token.cancelled() => {
                     println!("received signal to shutdown");
                 }
             }
