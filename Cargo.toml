@@ -1,9 +1,14 @@
 [package]
-name = "stop-on-call"
+name = "stop_on_call"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 axum = { version = "0.8.1" }
 tokio = { version = "1.43.0", features = ["full"] }
 tokio-util = "0.7.13"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12.12", features = ["json"] }
+serial_test = "3.2.0"
