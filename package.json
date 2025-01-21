@@ -1,0 +1,18 @@
+{
+  "name": "stop-on-call",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Stop On Call is a simple HTTP endpoint that stops the server when called",
+  "scripts": {
+    "release": "changeset tag"
+  },
+  "author": {
+    "name": "Ludovic Muller",
+    "url": "https://ludovic-muller.fr/"
+  },
+  "repository": "git@github.com:ludovicm67/stop-on-call.git",
+  "devDependencies": {
+    "@changesets/cli": "^2.27.11",
+    "@types/node": "^22.10.7"
+  }
+}
